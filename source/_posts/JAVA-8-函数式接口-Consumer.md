@@ -19,46 +19,23 @@ package java.util.function;
 import java.util.Objects;
 
 /**
- * Represents an operation that accepts a single input argument and returns no
- * result. Unlike most other functional interfaces, {@code Consumer} is expected
- * to operate via side-effects.
  *
  * 表示“接受一个参数输入且没有任何返回值的操作“。不同于其它的函数式接口，Consumer期望通过方法的实现来执行具体的操作。
- *
- * <p>This is a <a href="package-summary.html">functional interface</a>
- * whose functional method is {@link #accept(Object)}.
- *
- * @param <T> the type of the input to the operation
- *
- * @since 1.8
  */
 @FunctionalInterface
 public interface Consumer<T> {
 
     /**
-     * Performs this operation on the given argument.
-     *
      * 可实现方法，接受一个参数且没有返回值
-     * 
-     * @param t the input argument
      */
     void accept(T t);
 
     /**
-     * Returns a composed {@code Consumer} that performs, in sequence, this
-     * operation followed by the {@code after} operation. If performing either
-     * operation throws an exception, it is relayed to the caller of the
-     * composed operation.  If performing this operation throws an exception,
-     * the {@code after} operation will not be performed.
-     *
+     * 
      * 默认方法，提供链式调用方式执行。执行流程：先执行本身的accept在执行传入参数after.accept方法。
      * 该方法会抛出NullPointerException异常。
      * 如果在执行调用链时出现异常，会将异常传递给调用链功能的调用者，且发生异常后的after将不会在调用。
      * 
-     * @param after the operation to perform after this operation
-     * @return a composed {@code Consumer} that performs in sequence this
-     * operation followed by the {@code after} operation
-     * @throws NullPointerException if {@code after} is null
      */
     default Consumer<T> andThen(Consumer<? super T> after) {
         Objects.requireNonNull(after);

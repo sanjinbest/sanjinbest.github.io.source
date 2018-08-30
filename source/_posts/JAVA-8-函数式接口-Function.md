@@ -21,15 +21,8 @@ date: 2018-08-30 14:15:00
 ### 源码介绍
 ```
 /**
- * Represents a function that accepts one argument and produces a result.
  * 
  * 表示“接受一个参数输入并产生一个输出值的操作“。 
- *
- * <p>This is a <a href="package-summary.html">functional interface</a>
- * whose functional method is {@link #apply(Object)}.
- *
- * @param <T> the type of the input to the function
- * @param <R> the type of the result of the function
  *
  * @since 1.8
  */
@@ -40,28 +33,15 @@ public interface Function<T, R> {
      * Applies this function to the given argument.
      * 将此函数应用于给定的参数。即自定义参数类型和返回值类型的函数。
      * 
-     * @param t the function argument
-     * @return the function result
      */
     R apply(T t);
 
     /**
-     * Returns a composed function that first applies the {@code before}
-     * function to its input, and then applies this function to the result.
-     * If evaluation of either function throws an exception, it is relayed to
-     * the caller of the composed function.
+     * 
      * 返回一个组装后的函数，这个函数接收的参数为一个Function类型对象（before）。
      * 提供了一种调用链方式的函数，该函数会先执行参数before的apply方法，并将before返回值做为自身apply方法的输入参数。
      * 在执行期间函数调用链中的任一函数发生异常，都会传递给调用链函数的调用方。
      *
-     * @param <V> the type of input to the {@code before} function, and to the
-     *           composed function
-     * @param before the function to apply before this function is applied
-     * @return a composed function that first applies the {@code before}
-     * function and then applies this function
-     * @throws NullPointerException if before is null
-     *
-     * @see #andThen(Function)
      */
     default <V> Function<V, R> compose(Function<? super V, ? extends T> before) {
         Objects.requireNonNull(before);
@@ -69,21 +49,10 @@ public interface Function<T, R> {
     }
 
     /**
-     * Returns a composed function that first applies this function to
-     * its input, and then applies the {@code after} function to the result.
-     * If evaluation of either function throws an exception, it is relayed to
-     * the caller of the composed function.
+     *
      * 与compose方式提供类似的功能。与其不同的是andThen方法会优先执行自身的apply方法，并将其返回值做为after的输入参数。
      * 在执行期间函数调用链中的任一函数发生异常，都会传递给调用链函数的调用方。
      *
-     * @param <V> the type of output of the {@code after} function, and of the
-     *           composed function
-     * @param after the function to apply after this function is applied
-     * @return a composed function that first applies this function and then
-     * applies the {@code after} function
-     * @throws NullPointerException if after is null
-     *
-     * @see #compose(Function)
      */
     default <V> Function<T, V> andThen(Function<? super R, ? extends V> after) {
         Objects.requireNonNull(after);
@@ -91,11 +60,9 @@ public interface Function<T, R> {
     }
 
     /**
-     * Returns a function that always returns its input argument.
+     * 
      * 始终返回输入参数的方法
      *
-     * @param <T> the type of the input and output objects to the function
-     * @return a function that always returns its input argument
      */
     static <T> Function<T, T> identity() {
         return t -> t;
