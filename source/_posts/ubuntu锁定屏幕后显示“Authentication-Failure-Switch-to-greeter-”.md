@@ -6,6 +6,7 @@ tags:
   - ubuntu
 categories:
   - 问题记录
+  - linux
 date: 2018-09-11 18:16:00
 ---
 - Ubuntu版本：Ubuntu 16.04.5 LTS
