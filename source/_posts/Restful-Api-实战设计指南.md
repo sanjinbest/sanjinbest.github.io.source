@@ -39,6 +39,7 @@ URL风格 URL风格有以下三种:
 
 过深的路径嵌套，会导致资源之间的关系显得非常混乱。
 最多3层嵌套为佳，超过4层，则要考虑拆分接口。
+
 ```
 // bad
 /orgs/{org_id}/apps/{app_id}/dynos/{dyno_id}
@@ -307,11 +308,10 @@ expires: Thu, 19 Nov 1981 08:52:00 GMT
 		- 510 Not Extended
 		- 511 Network Authentication Required
         
-## 一的错误模型
+## 统一的错误模型
 有时候错误的状态码无法准确描述其错误类型，建议可以提供唯一的枚举类型的id来表明具体错误类型。
 
-- ssage 只是给开发者看的，不要把这个错误信息直接弹窗告诉最终用户
-- 者可以根据id字段，翻译成具体的提示信息，告诉最终用户。
+- message 只是给开发者看的，不要把这个错误信息直接弹窗告诉最终用户，或者可以根据id字段，翻译成具体的提示信息，告诉最终用户。
 ```
 {
   "id":      "rate_limit",
@@ -320,7 +320,7 @@ expires: Thu, 19 Nov 1981 08:52:00 GMT
 }
 ```
 
-## 是提供资源的唯一id
+或者是提供资源的唯一id
 ```
 [
   {
@@ -343,69 +343,6 @@ expires: Thu, 19 Nov 1981 08:52:00 GMT
 
 总之，要能够控制住响应体的大小。
 
-举个栗子，按天的查询，关于详情的数据应该放在另外一个接口中查询。
-
-
-
-|日期	|通话时长	|详情|
-|-|
-|1号	|40分钟	|查看详情|
-|2号	|40分钟	|查看详情|
-
-```
-// bad
-// GET /bills
-// 在账单的数组中，嵌套一个无法预估长度的detail数组
-// 如果detail数组过长，将会导致响应缓慢，太长的数据将会导致浏览器截断json
-[
-  {
-    id: '1'
-    date: 1, 
-    talkLength: 40, 
-    detail: [
-      {callingDevice: '888', ....},
-      {callingDevice: '888', ....},
-      {callingDevice: '888', ....},
-      {callingDevice: '888', ....},
-      {callingDevice: '888', ....},
-    ]
-  },
-  {
-    id: '2',
-    date: 2, 
-    talkLength: 80, 
-    detail: [
-      {callingDevice: '888', ....},
-      {callingDevice: '888', ....},
-      {callingDevice: '888', ....},
-      {callingDevice: '888', ....},
-      {callingDevice: '888', ....},
-    ]
-  }
-]
-
-// better
-// GET /bills
-// 将detail分离到专门查询detail的接口中
-[
-  {
-    date: 1, 
-    talkLength: 40
-  },
-  {
-    date: 2, 
-    talkLength: 80
-  }
-]
-// GET /bills/calls?day=2017-09-09&page=1&pageSize=20
-[{
-  {callingDevice: '888', ....},
-  {callingDevice: '888', ....},
-  {callingDevice: '888', ....},
-  {callingDevice: '888', ....},
-  {callingDevice: '888', ....},
-}]
-```
 
 ## 要在请求体中封装状态信息
 
