@@ -1,13 +1,16 @@
 title: 关于String内的indexOf方法的一些疑问
 author: 木子三金
 tags:
-  - java
+  - JAVA
+  - ''
   - 源码
 categories:
   - java
 date: 2018-12-14 17:48:00
 ---
 今天浏览了一下java里的String类，发现一个静态方法有点意思，就是我们常用的indexOf(String str)的底层实现，先看下代码调用链。
+
+<!-- more -->
 ```
 public int indexOf(String str) {
     return indexOf(str, 0);
