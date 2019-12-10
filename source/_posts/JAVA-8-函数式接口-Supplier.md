@@ -1,7 +1,9 @@
 title: JAVA 8 函数式接口--Supplier
 author: 木子三金
-date: 2018-08-31 13:59:53
-tags:
+tags: []
+categories:
+  - JAVA
+date: 2018-08-31 13:59:00
 ---
 从JDK8开始java支持函数式编程，JDK也提供了几个常用的函数式接口，这篇主要介绍Supplier接口。
 文本介绍的顺序依次为：

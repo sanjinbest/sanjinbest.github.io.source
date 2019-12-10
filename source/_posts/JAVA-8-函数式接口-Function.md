@@ -6,6 +6,7 @@ tags:
   - Function
 categories:
   - JAVA
+  - ''
 date: 2018-08-30 14:15:00
 ---
 从JDK8开始java支持函数式编程，JDK也提供了几个常用的函数式接口，这篇主要介绍Function接口。

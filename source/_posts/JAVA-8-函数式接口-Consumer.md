@@ -1,7 +1,9 @@
 title: JAVA 8 函数式接口--Consumer
 author: 木子三金
-date: 2018-08-06 15:33:44
-tags:
+tags: []
+categories:
+  - JAVA
+date: 2018-08-06 15:33:00
 ---
 从JDK8开始java支持函数式编程，JDK也提供了几个常用的函数式接口，这篇主要介绍Consumer接口。
 文本介绍的顺序依次为：
