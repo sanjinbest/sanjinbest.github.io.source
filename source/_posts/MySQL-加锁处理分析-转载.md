@@ -52,9 +52,8 @@ MySQL InnoDB存储引擎，实现的是基于多版本的并发控制协议—�
 其中，除了第一条语句，对读取记录加S锁 (共享锁)外，其他的操作，都加的是X锁 (排它锁)。
 
 为什么将 插入/更新/删除 操作，都归为当前读？可以看看下面这个 更新 操作，在数据库中的执行流程：
-![截屏2019-12-10下午1.57.51.png](https://upload-images.jianshu.io/upload_images/5160231-ac75e136e0b4ffc9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-
+![upload successful](/images/pasted-90.png)
 
 从图中，可以看到，一个Update操作的具体流程。当Update SQL被发给MySQL后，MySQL Server会根据where条件，读取第一条满足条件的记录，然后InnoDB引擎会将第一条记录返回，并加锁 (current read)。待MySQL Server收到这条加锁的记录之后，会再发起一个Update请求，更新这条记录。一条记录操作完成，再读取下一条记录，直至没有满足条件的记录为止。因此，Update操作内部，就包含了一个当前读。同理，Delete操作也一样。Insert操作会稍微有些不同，简单来说，就是Insert操作可能会触发Unique Key的冲突检查，也会进行一个当前读。
 
@@ -68,7 +67,7 @@ InnoDB存储引擎的数据组织方式，是聚簇索引表：完整的记录�
 
 传统RDBMS加锁的一个原则，就是2PL (二阶段锁)：[Two-Phase Locking](http://en.wikipedia.org/wiki/Two-phase_locking)。相对而言，2PL比较容易理解，说的是锁操作分为两个阶段：加锁阶段与解锁阶段，并且保证加锁阶段与解锁阶段不相交。下面，仍旧以MySQL为例，来简单看看2PL在MySQL中的实现。
 
-![截屏2019-12-10下午2.16.48.png](https://upload-images.jianshu.io/upload_images/5160231-00037134b62491f6.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![upload successful](/images/pasted-91.png)
 
 
 从上图可以看出，2PL就是将加锁/解锁分为两个完全不相交的阶段。
@@ -164,8 +163,7 @@ SQL2：delete from t1 where id = 10;
 
 这个组合，是最简单，最容易分析的组合。id是主键，Read Committed隔离级别，给定SQL：delete from t1 where id = 10; 只需要将主键上，id = 10的记录加上X锁即可。如下图所示：
 
-![截屏2019-12-10下午2.33.11.png](https://upload-images.jianshu.io/upload_images/5160231-1dc49d8bb674761b.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
-
+![upload successful](/images/pasted-92.png)
 
 **结论：id是主键时，此SQL只需要在id=10这条记录上加X锁即可。**
 
@@ -173,7 +171,7 @@ SQL2：delete from t1 where id = 10;
 
 这个组合，id不是主键，而是一个Unique的二级索引键值。那么在RC隔离级别下，delete from t1 where id = 10; 需要加什么锁呢？见下图：
 
-![截屏2019-12-10下午2.34.57.png](https://upload-images.jianshu.io/upload_images/5160231-8c428de4bfda73ca.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![upload successful](/images/pasted-93.png)
 
 
 此组合中，id是unique索引，而主键是name列。此时，加锁的情况由于组合一有所不同。由于id是unique索引，因此delete语句会选择走id列的索引进行where条件的过滤，在找到id=10的记录后，首先会将unique索引上的id=10索引记录加上X锁，同时，会根据读取到的name列，回主键索引(聚簇索引)，然后将聚簇索引上的name = ‘d’ 对应的主键索引项加X锁。
@@ -185,7 +183,7 @@ SQL2：delete from t1 where id = 10;
 
 相对于组合一、二，组合三又发生了变化，隔离级别仍旧是RC不变，但是id列上的约束又降低了，id列不再唯一，只有一个普通的索引。假设delete from t1 where id = 10; 语句，仍旧选择id列上的索引进行过滤where条件，那么此时会持有哪些锁？同样见下图：
 
-![截屏2019-12-10下午2.38.39.png](https://upload-images.jianshu.io/upload_images/5160231-0e74d2a0ad16bcde.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![upload successful](/images/pasted-95.png)
 
 
 根据此图，可以看到，首先，id列索引上，满足id = 10查询条件的记录，均已加锁。同时，这些记录对应的主键索引上的记录也都加上了锁。与组合二唯一的区别在于，组合二最多只有一个满足等值查询的记录，而组合三会将所有满足查询条件的记录都加锁。
@@ -196,7 +194,7 @@ SQL2：delete from t1 where id = 10;
 
 相对于前面三个组合，这是一个比较特殊的情况。id列上没有索引，where id = 10;这个过滤条件，没法通过索引进行过滤，那么只能走全表扫描做过滤。对应于这个组合，SQL会加什么锁？或者是换句话说，全表扫描时，会加什么锁？这个答案也有很多：有人说会在表上加X锁；有人说会将聚簇索引上，选择出来的id = 10;的记录加上X锁。那么实际情况呢？请看下图：
 
-![截屏2019-12-10下午2.39.50.png](https://upload-images.jianshu.io/upload_images/5160231-6fe75ab6dd48a24d.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![upload successful](/images/pasted-96.png)
 
 
 由于id列上没有索引，因此只能走聚簇索引，进行全部扫描。从图中可以看到，满足删除条件的记录有两条，但是，聚簇索引上所有的记录，都被加上了X锁。无论记录是否满足条件，全部被加上X锁。既不是加表锁，也不是在满足条件的记录上加行锁。
@@ -220,7 +218,7 @@ SQL2：delete from t1 where id = 10;
 
 组合七，Repeatable Read隔离级别，id上有一个非唯一索引，执行delete from t1 where id = 10; 假设选择id列上的索引进行条件过滤，最后的加锁行为，是怎么样的呢？同样看下面这幅图：
 
-![截屏2019-12-10下午2.45.46.png](https://upload-images.jianshu.io/upload_images/5160231-5659091d3108fc98.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![upload successful](/images/pasted-97.png)
 
 
 此图，相对于组合三：[id列上非唯一锁，Read Committed] 看似相同，其实却有很大的区别。最大的区别在于，这幅图中多了一个GAP锁，而且GAP锁看起来也不是加在记录上的，倒像是加载两条记录之间的位置，GAP锁有何用？
@@ -250,7 +248,7 @@ Insert操作，如insert [10,aa]，首先会定位到[6,c]与[10,b]间，然后�
 
 组合八，Repeatable Read隔离级别下的最后一种情况，id列上没有索引。此时SQL：delete from t1 where id = 10; 没有其他的路径可以选择，只能进行全表扫描。最终的加锁情况，如下图所示：
 
-![截屏2019-12-10下午3.00.48.png](https://upload-images.jianshu.io/upload_images/5160231-48810a40f2a3ee51.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![upload successful](/images/pasted-98.png)
 
 
 如图，这是一个很恐怖的现象。首先，聚簇索引上的所有记录，都被加上了X锁。其次，聚簇索引每条记录间的间隙(GAP)，也同时被加上了GAP锁。这个示例表，只有6条记录，一共需要6个记录锁，7个GAP锁。试想，如果表上有1000万条记录呢？
@@ -273,7 +271,7 @@ Serializable隔离级别，影响的是SQL1：select * from t1 where id = 10; �
 
 写到这里，其实MySQL的加锁实现也已经介绍的八八九九。只要将本文上面的分析思路，大部分的SQL，都能分析出其会加哪些锁。而这里，再来看一个稍微复杂点的SQL，用于说明MySQL加锁的另外一个逻辑。SQL用例如下：
 
-![截屏2019-12-10下午3.03.51.png](https://upload-images.jianshu.io/upload_images/5160231-1092fdab66756989.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![upload successful](/images/pasted-99.png)
 
 
 如图中的SQL，会加什么锁？假定在Repeatable Read隔离级别下 (Read Committed隔离级别下的加锁情况，留给读者分析。)，同时，假设SQL走的是idx_t1_pu索引。
@@ -288,7 +286,7 @@ Serializable隔离级别，影响的是SQL1：select * from t1 where id = 10; �
 
 在分析出SQL where条件的构成之后，再来看看这条SQL的加锁情况 (RR隔离级别)，如下图所示：
 
-![截屏2019-12-10下午3.08.41.png](https://upload-images.jianshu.io/upload_images/5160231-7a68b66349d9a407.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![upload successful](/images/pasted-100.png)
 
 
 从图中可以看出，在Repeatable Read隔离级别下，由Index Key所确定的范围，被加上了GAP锁；Index Filter锁给定的条件 (userid = ‘hdc’)何时过滤，视MySQL的版本而定，在MySQL 5.6版本之前，不支持[Index Condition Pushdown](http://dev.mysql.com/doc/refman/5.6/en/index-condition-pushdown-optimization.html)(ICP)，因此Index Filter在MySQL Server层过滤，在5.6后支持了Index Condition Pushdown，则在index上过滤。若不支持ICP，不满足Index Filter的记录，也需要加上记录X锁，若支持ICP，则不满足Index Filter的记录，无需加记录X锁 (图中，用红色箭头标出的X锁，是否要加，视是否支持ICP而定)；而Table Filter对应的过滤条件，则在聚簇索引中读取后，在MySQL Server层面过滤，因此聚簇索引上也需要X锁。最后，选取出了一条满足条件的记录[8,hdc,d,5,good]，但是加锁的数量，要远远大于满足条件的记录数量。
@@ -305,10 +303,11 @@ Serializable隔离级别，影响的是SQL1：select * from t1 where id = 10; �
 
 下面，来看看两个死锁的例子 (一个是两个Session的两条SQL产生死锁；另一个是两个Session的一条SQL，产生死锁)：
 
-![截屏2019-12-10下午3.12.17.png](https://upload-images.jianshu.io/upload_images/5160231-4de88678c0a0308c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-![截屏2019-12-10下午3.12.50.png](https://upload-images.jianshu.io/upload_images/5160231-f07e9f1db1caf603.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![upload successful](/images/pasted-102.png)
 
+
+![upload successful](/images/pasted-103.png)
 
 上面的两个死锁用例。第一个非常好理解，也是最常见的死锁，每个事务执行两条SQL，分别持有了一把锁，然后加另一把锁，产生死锁。
 
